@@ -1,0 +1,3 @@
+- [Jay - founder](user_jay.md) — MeowMail founder, building the browser extension companion
+- [Workflow rules](feedback_workflow.md) — Plan first, verify each phase, memory update, commit, new chat cycle
+- [Project overview](project_overview.md) — MeowMail extension: WXT + Preact + Tailwind, 5-step build, Step 1 DONE, Step 2 next

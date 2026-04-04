@@ -1,0 +1,117 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Syne", sans-serif;
+  --font-mono: "Azeret Mono", monospace;
+
+  --color-midnight: #08080c;
+  --color-surface: #111118;
+  --color-elevated: #1a1a24;
+  --color-border: #2a2a38;
+  --color-border-subtle: #1e1e2a;
+
+  --color-amber: #f5a623;
+  --color-amber-dim: #a16e14;
+  --color-amber-glow: rgba(245, 166, 35, 0.12);
+
+  --color-text-primary: #ede9e3;
+  --color-text-secondary: #8a8694;
+  --color-text-muted: #5c586a;
+
+  --color-success: #34d399;
+  --color-danger: #f87171;
+  --color-info: #60a5fa;
+}
+
+@layer base {
+  body {
+    @apply bg-midnight text-text-primary font-mono antialiased;
+    margin: 0;
+    width: 380px;
+    min-height: 500px;
+  }
+
+  ::selection {
+    background: var(--color-amber-glow);
+    color: var(--color-amber);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-lg
+           bg-amber text-midnight font-display font-semibold text-sm
+           tracking-wide uppercase
+           transition-all duration-200 ease-out
+           active:scale-[0.97];
+    &:hover {
+      box-shadow: 0 0 20px rgba(245, 166, 35, 0.3);
+    }
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg
+           border border-border text-text-secondary text-sm font-mono
+           transition-all duration-200;
+    &:hover {
+      @apply border-amber/40 text-text-primary;
+    }
+  }
+
+  .card {
+    @apply bg-surface border border-border rounded-xl p-4
+           transition-colors duration-150;
+  }
+
+  .card-hover {
+    @apply bg-surface border border-border rounded-xl p-4
+           transition-colors duration-150 cursor-pointer;
+    &:hover {
+      @apply border-amber/30 bg-elevated;
+    }
+  }
+}
+
+@utility text-gradient-amber {
+  background: linear-gradient(135deg, var(--color-amber), #fcd34d);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@utility glow-amber {
+  box-shadow: 0 0 30px rgba(245, 166, 35, 0.15),
+              0 0 60px rgba(245, 166, 35, 0.05);
+}
+
+@utility animate-fade-in {
+  animation: fade-in 0.5s ease-out both;
+}
+
+@utility animate-fade-up {
+  animation: fade-up 0.5s ease-out both;
+}
+
+@utility animate-slide-down {
+  animation: slide-down 0.3s ease-out both;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
