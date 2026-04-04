@@ -20,3 +20,8 @@ export const unreadCount = storage.defineItem<number>(
   'local:unreadCount',
   { fallback: 0 },
 );
+
+export const cachedDomains = storage.defineItem<string[]>(
+  'local:cachedDomains',
+  { fallback: [] },
+);

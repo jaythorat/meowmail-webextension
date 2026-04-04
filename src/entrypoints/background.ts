@@ -6,27 +6,32 @@ import {
   addressHistory,
   cachedEmails,
   unreadCount,
+  cachedDomains,
 } from '@/utils/storage';
 import type { RequestMessage } from '@/utils/messages';
 import type { AddressInfo } from '@/utils/types';
 
 export default defineBackground(() => {
-  // --- Context menu (must be registered synchronously) ---
-  browser.contextMenus.create({
-    id: 'fill-meowmail',
-    title: 'Fill with MeowMail address',
-    contexts: ['editable'],
+  // MV3 uses browser.action, MV2 uses browser.browserAction — WXT doesn't polyfill this
+  const action = browser.action ?? browser.browserAction;
+
+  // --- Context menu ---
+  // removeAll first to avoid duplicate-ID errors on Firefox dev reload
+  browser.contextMenus.removeAll(() => {
+    browser.contextMenus.create({
+      id: 'fill-meowmail',
+      title: 'Fill with MeowMail address',
+      contexts: ['editable'],
+    });
   });
 
   browser.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId !== 'fill-meowmail' || !tab?.id) return;
-    // Actual fill behavior handled in Step 4 (content script)
-    // For now, just log
     console.log('Context menu clicked — fill behavior coming in Step 4');
   });
 
   // --- Badge setup ---
-  browser.action.setBadgeBackgroundColor({ color: CONFIG.BADGE_COLOR });
+  action.setBadgeBackgroundColor({ color: CONFIG.BADGE_COLOR });
 
   // --- On install: generate first address ---
   browser.runtime.onInstalled.addListener(({ reason }) => {
@@ -34,20 +39,27 @@ export default defineBackground(() => {
 
     getDomains()
       .then((domains) => {
+        cachedDomains.setValue(domains);
         const domain = domains[0] || CONFIG.DEFAULT_DOMAIN;
         return initAddress(domain);
       })
       .catch(() => {
         // Fallback if API is unreachable: use default domain
+        cachedDomains.setValue([CONFIG.DEFAULT_DOMAIN]);
         initAddress(CONFIG.DEFAULT_DOMAIN);
       });
   });
 
   // --- Message handler ---
+  // Chrome requires sendResponse + return true (no polyfill for Promise returns).
+  // Firefox also supports this callback pattern natively.
   browser.runtime.onMessage.addListener(
     (message: RequestMessage, _sender, sendResponse) => {
-      handleMessage(message).then(sendResponse);
-      return true; // Keep channel open for async response
+      handleMessage(message).then(
+        (response) => sendResponse(response),
+        () => sendResponse(null),
+      );
+      return true;
     },
   );
 
@@ -89,11 +101,13 @@ export default defineBackground(() => {
   async function handleMessage(message: RequestMessage) {
     switch (message.type) {
       case 'GET_STATE': {
+        const domains = await cachedDomains.getValue();
         return {
           currentAddress: await currentAddress.getValue(),
           addressHistory: await addressHistory.getValue(),
           cachedEmails: await cachedEmails.getValue(),
           unreadCount: await unreadCount.getValue(),
+          domains: domains.length > 0 ? domains : [CONFIG.DEFAULT_DOMAIN],
         };
       }
 
@@ -153,6 +167,20 @@ export default defineBackground(() => {
         return { success: true };
       }
 
+      case 'REMOVE_FROM_HISTORY': {
+        const history = await addressHistory.getValue();
+        const updated = history.filter(
+          (h) => !(h.localPart === message.localPart && h.domain === message.domain),
+        );
+        await addressHistory.setValue(updated);
+        return { success: true };
+      }
+
+      case 'CLEAR_HISTORY': {
+        await addressHistory.setValue([]);
+        return { success: true };
+      }
+
       default:
         return null;
     }
@@ -160,6 +188,6 @@ export default defineBackground(() => {
 
   // --- Helper: update badge text ---
   async function updateBadge(count: number) {
-    await browser.action.setBadgeText({ text: count > 0 ? String(count) : '' });
+    await action.setBadgeText({ text: count > 0 ? String(count) : '' });
   }
 });

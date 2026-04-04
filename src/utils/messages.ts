@@ -8,7 +8,9 @@ export type RequestMessage =
   | { type: 'GET_EMAIL'; id: string }
   | { type: 'DELETE_EMAIL'; id: string }
   | { type: 'GET_CURRENT_ADDRESS' }
-  | { type: 'CLEAR_BADGE' };
+  | { type: 'CLEAR_BADGE' }
+  | { type: 'REMOVE_FROM_HISTORY'; localPart: string; domain: string }
+  | { type: 'CLEAR_HISTORY' };
 
 // Response types per request
 export type ResponseFor<T extends RequestMessage['type']> =
@@ -19,6 +21,8 @@ export type ResponseFor<T extends RequestMessage['type']> =
   T extends 'DELETE_EMAIL' ? { success: boolean } :
   T extends 'GET_CURRENT_ADDRESS' ? { localPart: string; domain: string } | null :
   T extends 'CLEAR_BADGE' ? { success: boolean } :
+  T extends 'REMOVE_FROM_HISTORY' ? { success: boolean } :
+  T extends 'CLEAR_HISTORY' ? { success: boolean } :
   never;
 
 // Events: Background → Popup (push notifications)

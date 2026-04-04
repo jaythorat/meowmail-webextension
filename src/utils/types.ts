@@ -33,4 +33,5 @@ export interface StorageState {
   addressHistory: AddressHistoryEntry[];
   cachedEmails: EmailSummary[];
   unreadCount: number;
+  domains: string[];
 }
