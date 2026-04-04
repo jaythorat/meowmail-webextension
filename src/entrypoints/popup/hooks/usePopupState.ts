@@ -12,6 +12,7 @@ export function usePopupState() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
 
   useEffect(() => {
     sendMessage({ type: 'GET_STATE' }).then((state) => {
@@ -101,6 +102,19 @@ export function usePopupState() {
     setHistory([]);
   }, []);
 
+  const selectEmail = useCallback((id: string) => {
+    setSelectedEmailId(id);
+  }, []);
+
+  const deselectEmail = useCallback(() => {
+    setSelectedEmailId(null);
+  }, []);
+
+  const handleEmailDeleted = useCallback((id: string) => {
+    setEmails((prev) => prev.filter((e) => e.id !== id));
+    setSelectedEmailId(null);
+  }, []);
+
   return {
     address,
     history,
@@ -109,9 +123,13 @@ export function usePopupState() {
     unreadCount,
     connectionStatus,
     isLoading,
+    selectedEmailId,
     generateAddress,
     setCustomAddress,
     removeFromHistory,
     clearHistory,
+    selectEmail,
+    deselectEmail,
+    handleEmailDeleted,
   };
 }

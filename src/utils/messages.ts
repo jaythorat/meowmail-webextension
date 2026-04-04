@@ -1,4 +1,4 @@
-import type { StorageState, EmailSummary, EmailDetail, ConnectionStatus } from './types';
+import type { StorageState, EmailSummary, EmailDetail, Attachment, ConnectionStatus } from './types';
 
 // Requests: Popup/Content → Background
 export type RequestMessage =
@@ -8,6 +8,7 @@ export type RequestMessage =
   | { type: 'GET_EMAIL'; id: string }
   | { type: 'DELETE_EMAIL'; id: string }
   | { type: 'GET_CURRENT_ADDRESS' }
+  | { type: 'GET_ATTACHMENTS'; emailId: string }
   | { type: 'CLEAR_BADGE' }
   | { type: 'REMOVE_FROM_HISTORY'; localPart: string; domain: string }
   | { type: 'CLEAR_HISTORY' };
@@ -20,6 +21,7 @@ export type ResponseFor<T extends RequestMessage['type']> =
   T extends 'GET_EMAIL' ? EmailDetail :
   T extends 'DELETE_EMAIL' ? { success: boolean } :
   T extends 'GET_CURRENT_ADDRESS' ? { localPart: string; domain: string } | null :
+  T extends 'GET_ATTACHMENTS' ? Attachment[] :
   T extends 'CLEAR_BADGE' ? { success: boolean } :
   T extends 'REMOVE_FROM_HISTORY' ? { success: boolean } :
   T extends 'CLEAR_HISTORY' ? { success: boolean } :

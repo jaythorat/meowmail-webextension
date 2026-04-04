@@ -85,6 +85,42 @@ export const InboxIcon = ({ class: cls }: IconProps) => (
   </Svg>
 );
 
+export const ArrowLeftIcon = ({ class: cls }: IconProps) => (
+  <Svg class={cls}>
+    <path d="m12 19-7-7 7-7" />
+    <path d="M19 12H5" />
+  </Svg>
+);
+
+export const TrashIcon = ({ class: cls }: IconProps) => (
+  <Svg class={cls}>
+    <path d="M3 6h18" />
+    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+  </Svg>
+);
+
+export const DownloadIcon = ({ class: cls }: IconProps) => (
+  <Svg class={cls}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" x2="12" y1="15" y2="3" />
+  </Svg>
+);
+
+export const ShieldIcon = ({ class: cls }: IconProps) => (
+  <Svg class={cls}>
+    <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+  </Svg>
+);
+
+export const FileIcon = ({ class: cls }: IconProps) => (
+  <Svg class={cls}>
+    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+    <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+  </Svg>
+);
+
 export const CatIcon = ({ class: cls }: IconProps) => (
   <svg
     class={cls}

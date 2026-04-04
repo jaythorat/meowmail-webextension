@@ -1,6 +1,6 @@
 import { generateLocalPart, validateLocalPart } from '@/utils/addressGenerator';
 import CONFIG from '@/utils/config';
-import { getDomains, getInbox, getEmail, deleteEmail } from '@/utils/api';
+import { getDomains, getInbox, getEmail, deleteEmail, getAttachments } from '@/utils/api';
 import {
   currentAddress,
   cachedEmails,
@@ -62,7 +62,9 @@ export default defineBackground(() => {
 
   browser.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId !== 'fill-meowmail' || !tab?.id) return;
-    console.log('Context menu clicked — fill behavior coming in Step 4');
+    browser.tabs.sendMessage(tab.id, { type: 'FILL_ACTIVE_FIELD' }).catch(() => {
+      // Content script not injected on this page — ignore
+    });
   });
 
   // --- Badge setup ---
@@ -218,6 +220,10 @@ export default defineBackground(() => {
 
       case 'GET_CURRENT_ADDRESS': {
         return await currentAddress.getValue();
+      }
+
+      case 'GET_ATTACHMENTS': {
+        return await getAttachments(message.emailId);
       }
 
       case 'CLEAR_BADGE': {
