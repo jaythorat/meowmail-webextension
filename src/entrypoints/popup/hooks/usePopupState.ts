@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'preact/hooks';
 import { sendMessage } from '@/utils/messages';
+import type { EventMessage } from '@/utils/messages';
 import CONFIG from '@/utils/config';
-import type { AddressInfo, AddressHistoryEntry, EmailSummary } from '@/utils/types';
+import type { AddressInfo, AddressHistoryEntry, EmailSummary, ConnectionStatus } from '@/utils/types';
 
 export function usePopupState() {
   const [address, setAddress] = useState<AddressInfo | null>(null);
@@ -9,6 +10,7 @@ export function usePopupState() {
   const [emails, setEmails] = useState<EmailSummary[]>([]);
   const [domains, setDomains] = useState<string[]>([CONFIG.DEFAULT_DOMAIN]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -18,6 +20,7 @@ export function usePopupState() {
         setHistory(state.addressHistory);
         setEmails(state.cachedEmails);
         setUnreadCount(state.unreadCount);
+        setConnectionStatus(state.connectionStatus);
         if (state.domains.length > 0) setDomains(state.domains);
         setIsLoading(false);
       } else {
@@ -30,13 +33,34 @@ export function usePopupState() {
     });
 
     sendMessage({ type: 'CLEAR_BADGE' });
+
+    // Listen for push events from the background worker
+    const listener = (message: EventMessage) => {
+      switch (message.type) {
+        case 'NEW_EMAIL':
+          setEmails((prev) => {
+            if (prev.some((e) => e.id === message.email.id)) return prev;
+            return [message.email, ...prev];
+          });
+          break;
+        case 'EMAIL_EXPIRED':
+          setEmails((prev) => prev.filter((e) => e.id !== message.id));
+          break;
+        case 'CONNECTION_STATUS':
+          setConnectionStatus(message.status);
+          break;
+      }
+    };
+
+    browser.runtime.onMessage.addListener(listener);
+    return () => browser.runtime.onMessage.removeListener(listener);
   }, []);
 
   const generateAddress = useCallback(async () => {
     const result = await sendMessage({ type: 'GENERATE_ADDRESS' });
     const newAddress = { localPart: result.localPart, domain: result.domain };
     setAddress(newAddress);
-    setEmails([]);
+    setEmails(result.emails);
     setUnreadCount(0);
     const entry = { ...newAddress, createdAt: new Date().toISOString() };
     setHistory((prev) => [entry, ...prev].slice(0, CONFIG.MAX_HISTORY));
@@ -47,7 +71,7 @@ export function usePopupState() {
       const result = await sendMessage({ type: 'SET_ADDRESS', localPart, domain });
       if (result.success) {
         setAddress({ localPart, domain });
-        setEmails([]);
+        setEmails(result.emails);
         setUnreadCount(0);
         const entry = { localPart, domain, createdAt: new Date().toISOString() };
         setHistory((prev) => {
@@ -83,6 +107,7 @@ export function usePopupState() {
     emails,
     domains,
     unreadCount,
+    connectionStatus,
     isLoading,
     generateAddress,
     setCustomAddress,

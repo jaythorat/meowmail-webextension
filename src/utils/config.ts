@@ -1,6 +1,7 @@
 const CONFIG = {
-  API_BASE_URL: import.meta.env.VITE_API_URL ?? 'https://meowmail.in',
-  WS_URL: import.meta.env.VITE_WS_URL ?? 'wss://meowmail.in/socket',
+  SITE_URL: 'https://meowmail.in',
+  API_BASE_URL: import.meta.env.VITE_API_URL ?? 'https://api.meowmail.in',
+  WS_URL: import.meta.env.VITE_WS_URL ?? 'wss://api.meowmail.in/socket',
   DEFAULT_DOMAIN: 'meowmail.in',
   MAX_HISTORY: 10,
   BADGE_COLOR: '#f5a623',

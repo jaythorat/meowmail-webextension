@@ -1,4 +1,4 @@
-import type { StorageState, EmailSummary, EmailDetail } from './types';
+import type { StorageState, EmailSummary, EmailDetail, ConnectionStatus } from './types';
 
 // Requests: Popup/Content → Background
 export type RequestMessage =
@@ -15,8 +15,8 @@ export type RequestMessage =
 // Response types per request
 export type ResponseFor<T extends RequestMessage['type']> =
   T extends 'GET_STATE' ? StorageState :
-  T extends 'GENERATE_ADDRESS' ? { localPart: string; domain: string } :
-  T extends 'SET_ADDRESS' ? { success: boolean } :
+  T extends 'GENERATE_ADDRESS' ? { localPart: string; domain: string; emails: EmailSummary[] } :
+  T extends 'SET_ADDRESS' ? { success: boolean; emails: EmailSummary[] } :
   T extends 'GET_EMAIL' ? EmailDetail :
   T extends 'DELETE_EMAIL' ? { success: boolean } :
   T extends 'GET_CURRENT_ADDRESS' ? { localPart: string; domain: string } | null :
@@ -30,7 +30,7 @@ export type EventMessage =
   | { type: 'STATE_UPDATE'; state: StorageState }
   | { type: 'NEW_EMAIL'; email: EmailSummary }
   | { type: 'EMAIL_EXPIRED'; id: string }
-  | { type: 'CONNECTION_STATUS'; status: 'connected' | 'disconnected' | 'error' };
+  | { type: 'CONNECTION_STATUS'; status: ConnectionStatus };
 
 // Typed message sender for popup/content → background
 export const sendMessage = <T extends RequestMessage>(

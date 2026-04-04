@@ -8,7 +8,7 @@ export default defineConfig({
     name: 'MeowMail — Disposable Email',
     description: 'Generate temporary email addresses instantly. No signup, no tracking.',
     permissions: ['activeTab', 'storage', 'contextMenus', 'clipboardWrite'],
-    host_permissions: ['https://meowmail.in/*'],
+    host_permissions: ['https://meowmail.in/*', 'https://api.meowmail.in/*'],
     icons: {
       16: '/icons/icon-16.png',
       32: '/icons/icon-32.png',

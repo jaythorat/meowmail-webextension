@@ -65,6 +65,26 @@ export const ExternalLinkIcon = ({ class: cls }: IconProps) => (
   </Svg>
 );
 
+export const MailIcon = ({ class: cls }: IconProps) => (
+  <Svg class={cls}>
+    <rect width="20" height="16" x="2" y="4" rx="2" />
+    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+  </Svg>
+);
+
+export const PaperclipIcon = ({ class: cls }: IconProps) => (
+  <Svg class={cls}>
+    <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+  </Svg>
+);
+
+export const InboxIcon = ({ class: cls }: IconProps) => (
+  <Svg class={cls}>
+    <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+    <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+  </Svg>
+);
+
 export const CatIcon = ({ class: cls }: IconProps) => (
   <svg
     class={cls}

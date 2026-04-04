@@ -1,6 +1,12 @@
+import type { ConnectionStatus } from '@/utils/types';
 import { CatIcon } from './Icons';
+import StatusBadge from './StatusBadge';
 
-const Header = () => (
+interface HeaderProps {
+  connectionStatus?: ConnectionStatus;
+}
+
+const Header = ({ connectionStatus }: HeaderProps) => (
   <header class="flex items-center justify-between px-4 py-3 border-b border-border-subtle shrink-0">
     <div class="flex items-center gap-2">
       <CatIcon class="text-amber" />
@@ -8,7 +14,7 @@ const Header = () => (
         MeowMail
       </span>
     </div>
-    {/* Connection status badge — Step 3 */}
+    {connectionStatus && <StatusBadge status={connectionStatus} />}
   </header>
 );
 

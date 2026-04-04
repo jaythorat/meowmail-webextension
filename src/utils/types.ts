@@ -28,10 +28,13 @@ export interface AddressHistoryEntry extends AddressInfo {
   createdAt: string;
 }
 
+export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
+
 export interface StorageState {
   currentAddress: AddressInfo | null;
   addressHistory: AddressHistoryEntry[];
   cachedEmails: EmailSummary[];
   unreadCount: number;
   domains: string[];
+  connectionStatus: ConnectionStatus;
 }

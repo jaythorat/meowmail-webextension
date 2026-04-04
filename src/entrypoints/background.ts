@@ -3,17 +3,52 @@ import CONFIG from '@/utils/config';
 import { getDomains, getInbox, getEmail, deleteEmail } from '@/utils/api';
 import {
   currentAddress,
-  addressHistory,
   cachedEmails,
   unreadCount,
   cachedDomains,
+  addressHistory,
 } from '@/utils/storage';
-import type { RequestMessage } from '@/utils/messages';
-import type { AddressInfo } from '@/utils/types';
+import { InboxSocket } from '@/utils/websocket';
+import type { RequestMessage, EventMessage } from '@/utils/messages';
+import type { AddressInfo, ConnectionStatus, EmailSummary } from '@/utils/types';
 
 export default defineBackground(() => {
   // MV3 uses browser.action, MV2 uses browser.browserAction — WXT doesn't polyfill this
   const action = browser.action ?? browser.browserAction;
+
+  let connectionStatus: ConnectionStatus = 'connecting';
+
+  // --- WebSocket setup ---
+  const inbox = new InboxSocket({
+    async onNewEmail(email: EmailSummary) {
+      // Prepend to cached emails
+      const emails = await cachedEmails.getValue();
+      const exists = emails.some((e) => e.id === email.id);
+      if (!exists) {
+        await cachedEmails.setValue([email, ...emails]);
+      }
+
+      // Increment unread count + badge
+      const count = (await unreadCount.getValue()) + 1;
+      await unreadCount.setValue(count);
+      await updateBadge(count);
+
+      // Push to popup
+      broadcastEvent({ type: 'NEW_EMAIL', email });
+    },
+
+    async onEmailExpired(id: string) {
+      const emails = await cachedEmails.getValue();
+      await cachedEmails.setValue(emails.filter((e) => e.id !== id));
+
+      broadcastEvent({ type: 'EMAIL_EXPIRED', id });
+    },
+
+    onStatusChange(status: ConnectionStatus) {
+      connectionStatus = status;
+      broadcastEvent({ type: 'CONNECTION_STATUS', status });
+    },
+  });
 
   // --- Context menu ---
   // removeAll first to avoid duplicate-ID errors on Firefox dev reload
@@ -50,6 +85,9 @@ export default defineBackground(() => {
       });
   });
 
+  // --- On startup: reconnect WebSocket for active address ---
+  bootstrapWebSocket();
+
   // --- Message handler ---
   // Chrome requires sendResponse + return true (no polyfill for Promise returns).
   // Firefox also supports this callback pattern natively.
@@ -63,6 +101,14 @@ export default defineBackground(() => {
     },
   );
 
+  // --- Helper: bootstrap WebSocket on startup/wake ---
+  async function bootstrapWebSocket() {
+    const address = await currentAddress.getValue();
+    if (address) {
+      inbox.joinChannel(address.localPart, address.domain);
+    }
+  }
+
   // --- Helper: initialize a new address ---
   async function initAddress(domain: string) {
     const localPart = generateLocalPart();
@@ -71,6 +117,7 @@ export default defineBackground(() => {
     await currentAddress.setValue(address);
     await addToHistory(address);
     await refreshInbox(address);
+    inbox.joinChannel(localPart, domain);
   }
 
   // --- Helper: add address to history ---
@@ -87,14 +134,23 @@ export default defineBackground(() => {
   }
 
   // --- Helper: fetch and cache inbox ---
-  async function refreshInbox(address: AddressInfo) {
+  async function refreshInbox(address: AddressInfo): Promise<EmailSummary[]> {
     try {
       const emails = await getInbox(address.domain, address.localPart);
       await cachedEmails.setValue(emails);
+      return emails;
     } catch {
       // Non-critical: inbox might be empty or API down
       await cachedEmails.setValue([]);
+      return [];
     }
+  }
+
+  // --- Helper: broadcast event to all extension pages (popup, etc.) ---
+  function broadcastEvent(event: EventMessage) {
+    browser.runtime.sendMessage(event).catch(() => {
+      // No listeners (popup closed) — ignore
+    });
   }
 
   // --- Message dispatcher ---
@@ -108,6 +164,7 @@ export default defineBackground(() => {
           cachedEmails: await cachedEmails.getValue(),
           unreadCount: await unreadCount.getValue(),
           domains: domains.length > 0 ? domains : [CONFIG.DEFAULT_DOMAIN],
+          connectionStatus,
         };
       }
 
@@ -122,14 +179,15 @@ export default defineBackground(() => {
         await cachedEmails.setValue([]);
         await unreadCount.setValue(0);
         await updateBadge(0);
-        refreshInbox(newAddress); // Fire and forget
+        inbox.joinChannel(localPart, domain);
+        const emails = await refreshInbox(newAddress);
 
-        return { localPart, domain };
+        return { localPart, domain, emails };
       }
 
       case 'SET_ADDRESS': {
         if (!validateLocalPart(message.localPart)) {
-          return { success: false };
+          return { success: false, emails: [] };
         }
         const newAddress: AddressInfo = {
           localPart: message.localPart,
@@ -141,9 +199,10 @@ export default defineBackground(() => {
         await cachedEmails.setValue([]);
         await unreadCount.setValue(0);
         await updateBadge(0);
-        refreshInbox(newAddress); // Fire and forget
+        inbox.joinChannel(message.localPart, message.domain);
+        const emails = await refreshInbox(newAddress);
 
-        return { success: true };
+        return { success: true, emails };
       }
 
       case 'GET_EMAIL': {

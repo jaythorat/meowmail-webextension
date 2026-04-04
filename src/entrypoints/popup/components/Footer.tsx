@@ -8,8 +8,8 @@ interface FooterProps {
 
 const Footer = ({ address }: FooterProps) => {
   const url = address
-    ? `${CONFIG.API_BASE_URL}/inbox/${address.domain}/${address.localPart}`
-    : CONFIG.API_BASE_URL;
+    ? `${CONFIG.SITE_URL}/inbox/${address.domain}/${address.localPart}`
+    : CONFIG.SITE_URL;
 
   return (
     <footer class="shrink-0 border-t border-border-subtle px-4 py-2.5">
