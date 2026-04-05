@@ -3,6 +3,7 @@ import { sendMessage } from '@/utils/messages';
 import type { EventMessage } from '@/utils/messages';
 import CONFIG from '@/utils/config';
 import type { AddressInfo, AddressHistoryEntry, EmailSummary, ConnectionStatus } from '@/utils/types';
+import { showToast } from '../components/Toast';
 
 export function usePopupState() {
   const [address, setAddress] = useState<AddressInfo | null>(null);
@@ -15,25 +16,29 @@ export function usePopupState() {
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
 
   useEffect(() => {
-    sendMessage({ type: 'GET_STATE' }).then((state) => {
-      if (state.currentAddress) {
-        setAddress(state.currentAddress);
-        setHistory(state.addressHistory);
-        setEmails(state.cachedEmails);
-        setUnreadCount(state.unreadCount);
-        setConnectionStatus(state.connectionStatus);
-        if (state.domains.length > 0) setDomains(state.domains);
-        setIsLoading(false);
-      } else {
-        // Edge case: popup opened before install handler finished
-        sendMessage({ type: 'GENERATE_ADDRESS' }).then((result) => {
-          setAddress({ localPart: result.localPart, domain: result.domain });
+    sendMessage({ type: 'GET_STATE' })
+      .then((state) => {
+        if (state.currentAddress) {
+          setAddress(state.currentAddress);
+          setHistory(state.addressHistory);
+          setEmails(state.cachedEmails);
+          setUnreadCount(state.unreadCount);
+          setConnectionStatus(state.connectionStatus);
+          if (state.domains.length > 0) setDomains(state.domains);
           setIsLoading(false);
-        });
-      }
-    });
+        } else {
+          return sendMessage({ type: 'GENERATE_ADDRESS' }).then((result) => {
+            setAddress({ localPart: result.localPart, domain: result.domain });
+            setIsLoading(false);
+          });
+        }
+      })
+      .catch(() => {
+        setIsLoading(false);
+        showToast("Can't reach MeowMail servers");
+      });
 
-    sendMessage({ type: 'CLEAR_BADGE' });
+    sendMessage({ type: 'CLEAR_BADGE' }).catch(() => {});
 
     // Listen for push events from the background worker
     const listener = (message: EventMessage) => {
@@ -58,31 +63,40 @@ export function usePopupState() {
   }, []);
 
   const generateAddress = useCallback(async () => {
-    const result = await sendMessage({ type: 'GENERATE_ADDRESS' });
-    const newAddress = { localPart: result.localPart, domain: result.domain };
-    setAddress(newAddress);
-    setEmails(result.emails);
-    setUnreadCount(0);
-    const entry = { ...newAddress, createdAt: new Date().toISOString() };
-    setHistory((prev) => [entry, ...prev].slice(0, CONFIG.MAX_HISTORY));
+    try {
+      const result = await sendMessage({ type: 'GENERATE_ADDRESS' });
+      const newAddress = { localPart: result.localPart, domain: result.domain };
+      setAddress(newAddress);
+      setEmails(result.emails);
+      setUnreadCount(0);
+      const entry = { ...newAddress, createdAt: new Date().toISOString() };
+      setHistory((prev) => [entry, ...prev].slice(0, CONFIG.MAX_HISTORY));
+    } catch {
+      showToast("Can't reach MeowMail servers");
+    }
   }, []);
 
   const setCustomAddress = useCallback(
     async (localPart: string, domain: string) => {
-      const result = await sendMessage({ type: 'SET_ADDRESS', localPart, domain });
-      if (result.success) {
-        setAddress({ localPart, domain });
-        setEmails(result.emails);
-        setUnreadCount(0);
-        const entry = { localPart, domain, createdAt: new Date().toISOString() };
-        setHistory((prev) => {
-          const filtered = prev.filter(
-            (h) => !(h.localPart === localPart && h.domain === domain),
-          );
-          return [entry, ...filtered].slice(0, CONFIG.MAX_HISTORY);
-        });
+      try {
+        const result = await sendMessage({ type: 'SET_ADDRESS', localPart, domain });
+        if (result.success) {
+          setAddress({ localPart, domain });
+          setEmails(result.emails);
+          setUnreadCount(0);
+          const entry = { localPart, domain, createdAt: new Date().toISOString() };
+          setHistory((prev) => {
+            const filtered = prev.filter(
+              (h) => !(h.localPart === localPart && h.domain === domain),
+            );
+            return [entry, ...filtered].slice(0, CONFIG.MAX_HISTORY);
+          });
+        }
+        return result.success;
+      } catch {
+        showToast("Can't reach MeowMail servers");
+        return false;
       }
-      return result.success;
     },
     [],
   );

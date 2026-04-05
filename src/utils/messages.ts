@@ -38,5 +38,10 @@ export type EventMessage =
 export const sendMessage = <T extends RequestMessage>(
   message: T,
 ): Promise<ResponseFor<T['type']>> => {
-  return browser.runtime.sendMessage(message);
+  return browser.runtime.sendMessage(message).then((response: any) => {
+    if (response && response.__error) {
+      throw new Error(response.message);
+    }
+    return response;
+  });
 };

@@ -12,6 +12,7 @@ import {
   ClockIcon,
   FileIcon,
 } from './Icons';
+import { showToast } from './Toast';
 
 interface EmailDetailProps {
   emailId: string;
@@ -79,7 +80,12 @@ const EmailDetail = ({ emailId, address, onBack, onDeleted }: EmailDetailProps) 
           sendMessage({ type: 'GET_ATTACHMENTS', emailId }).then(setAttachments);
         }
       })
-      .catch(() => setError('Failed to load email'))
+      .catch((err) => {
+        const msg = err?.message?.includes('429')
+          ? 'Too many requests, please wait'
+          : 'Failed to load email';
+        setError(msg);
+      })
       .finally(() => setIsLoading(false));
   }, [emailId]);
 
@@ -117,6 +123,7 @@ const EmailDetail = ({ emailId, address, onBack, onDeleted }: EmailDetailProps) 
       onDeleted(emailId);
     } catch {
       setIsDeleting(false);
+      showToast('Failed to delete email');
     }
   };
 

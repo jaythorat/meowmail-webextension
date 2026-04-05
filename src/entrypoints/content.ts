@@ -153,8 +153,8 @@ export default defineContentScript({
       }
     }
 
-    // --- Listen for messages from background (context menu fill) ---
-    browser.runtime.onMessage.addListener((message: { type: string }) => {
+    // --- Listen for messages from background (context menu fill, clipboard copy) ---
+    browser.runtime.onMessage.addListener((message: { type: string; text?: string }) => {
       if (message.type === 'FILL_ACTIVE_FIELD') {
         const active = document.activeElement;
         if (active instanceof HTMLInputElement && isEmailField(active)) {
@@ -168,6 +168,8 @@ export default defineContentScript({
             }
           }
         }
+      } else if (message.type === 'COPY_TO_CLIPBOARD' && message.text) {
+        navigator.clipboard.writeText(message.text).catch(() => {});
       }
     });
 

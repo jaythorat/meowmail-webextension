@@ -67,6 +67,23 @@ export default defineBackground(() => {
     });
   });
 
+  // --- Keyboard shortcut: copy address ---
+  browser.commands.onCommand.addListener(async (command) => {
+    if (command !== 'copy-address') return;
+    const address = await currentAddress.getValue();
+    if (!address) return;
+
+    const email = `${address.localPart}@${address.domain}`;
+
+    // Write to clipboard via the active tab's content script
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+    if (tab?.id) {
+      browser.tabs.sendMessage(tab.id, { type: 'COPY_TO_CLIPBOARD', text: email }).catch(() => {
+        // Content script not available — silent fail
+      });
+    }
+  });
+
   // --- Badge setup ---
   action.setBadgeBackgroundColor({ color: CONFIG.BADGE_COLOR });
 
@@ -97,7 +114,16 @@ export default defineBackground(() => {
     (message: RequestMessage, _sender, sendResponse) => {
       handleMessage(message).then(
         (response) => sendResponse(response),
-        () => sendResponse(null),
+        (err) => {
+          // Pass error info so popup can show appropriate messages
+          const isRateLimit = err?.isRateLimit || err?.status === 429;
+          sendResponse({
+            __error: true,
+            message: isRateLimit
+              ? 'Too many requests, please wait'
+              : err?.message || "Can't reach MeowMail servers",
+          });
+        },
       );
       return true;
     },
