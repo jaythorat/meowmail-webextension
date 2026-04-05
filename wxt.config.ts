@@ -13,6 +13,17 @@ export default defineConfig({
       description: 'Generate temporary email addresses instantly. No signup, no tracking.',
       permissions: ['activeTab', 'storage', 'contextMenus', 'clipboardWrite'],
       host_permissions: ['https://meowmail.in/*', 'https://api.meowmail.in/*'],
+      ...(browser === 'firefox' && {
+        browser_specific_settings: {
+          gecko: {
+            id: 'extension@meowmail.in',
+            data_collection_permissions: {
+              required: ['none'],
+              optional: [],
+            },
+          },
+        },
+      }),
       icons: {
         16: '/icons/icon-16.png',
         32: '/icons/icon-32.png',

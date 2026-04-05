@@ -18,12 +18,38 @@ export default defineContentScript({
       icon.setAttribute('role', 'button');
       icon.setAttribute('aria-label', 'Fill with MeowMail address');
 
-      icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="${ICON_SIZE}" height="${ICON_SIZE}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 5c.67 0 1.35.09 2 .26 1.78-2 5.03-2.1 6.27-.46.7 1.07.68 2.97-.1 4.2.58 1.05.9 2.25.83 3.5-.17 3.08-2.77 5.54-5.8 5.5H8.8C5.77 18.04 3.17 15.58 3 12.5c-.07-1.25.25-2.45.83-3.5-.78-1.23-.8-3.13-.1-4.2C4.97 3.16 8.22 3.26 10 5.26 10.65 5.09 11.33 5 12 5z"/>
-        <circle cx="9" cy="12" r="1" fill="currentColor"/>
-        <circle cx="15" cy="12" r="1" fill="currentColor"/>
-        <path d="M10 15.5c.5.3 1 .5 2 .5s1.5-.2 2-.5" stroke-width="1.5"/>
-      </svg>`;
+      const NS = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(NS, 'svg');
+      svg.setAttribute('width', String(ICON_SIZE));
+      svg.setAttribute('height', String(ICON_SIZE));
+      svg.setAttribute('viewBox', '0 0 24 24');
+      svg.setAttribute('fill', 'none');
+      svg.setAttribute('stroke', 'currentColor');
+      svg.setAttribute('stroke-width', '2');
+      svg.setAttribute('stroke-linecap', 'round');
+      svg.setAttribute('stroke-linejoin', 'round');
+
+      const path1 = document.createElementNS(NS, 'path');
+      path1.setAttribute('d', 'M12 5c.67 0 1.35.09 2 .26 1.78-2 5.03-2.1 6.27-.46.7 1.07.68 2.97-.1 4.2.58 1.05.9 2.25.83 3.5-.17 3.08-2.77 5.54-5.8 5.5H8.8C5.77 18.04 3.17 15.58 3 12.5c-.07-1.25.25-2.45.83-3.5-.78-1.23-.8-3.13-.1-4.2C4.97 3.16 8.22 3.26 10 5.26 10.65 5.09 11.33 5 12 5z');
+
+      const eye1 = document.createElementNS(NS, 'circle');
+      eye1.setAttribute('cx', '9');
+      eye1.setAttribute('cy', '12');
+      eye1.setAttribute('r', '1');
+      eye1.setAttribute('fill', 'currentColor');
+
+      const eye2 = document.createElementNS(NS, 'circle');
+      eye2.setAttribute('cx', '15');
+      eye2.setAttribute('cy', '12');
+      eye2.setAttribute('r', '1');
+      eye2.setAttribute('fill', 'currentColor');
+
+      const mouth = document.createElementNS(NS, 'path');
+      mouth.setAttribute('d', 'M10 15.5c.5.3 1 .5 2 .5s1.5-.2 2-.5');
+      mouth.setAttribute('stroke-width', '1.5');
+
+      svg.append(path1, eye1, eye2, mouth);
+      icon.appendChild(svg);
 
       icon.addEventListener('click', (e) => {
         e.preventDefault();
